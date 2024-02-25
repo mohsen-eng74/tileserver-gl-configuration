@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  tileserver:
+    image: maptiler/tileserver-gl:v4.10.2
+    container_name: tileserver_app
+    restart: unless-stopped
+    volumes:
+      # ref: https://github.com/maptiler/tileserver-gl/blob/30ac5279da6b3ff761e965c742349d729090d58b/Dockerfile#L110
+      - ./docker/services/tileserver/volumes/fonts:/usr/src/app/node_modules/tileserver-gl-styles/fonts:ro
+      - ./docker/services/tileserver/volumes/styles:/usr/src/app/node_modules/tileserver-gl-styles/styles:ro
+      - ./docker/services/tileserver/volumes/tiles:/data:ro
+
+  nginx:
+    image: nginx:1.25-bookworm
+    container_name: tileserver_proxy
+    restart: unless-stopped
+    volumes:
+      - ./docker/services/nginx/volumes/sites-enabled:/etc/nginx/conf.d:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: 200m
+        max-file: "10"
+    depends_on:
+      - tileserver
+    ports:
+      - 8080:80
